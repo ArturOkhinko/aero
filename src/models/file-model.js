@@ -1,5 +1,5 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../database'); // Подключаем экземпляр Sequelize
+const { DataTypes } = require('sequelize')
+const sequelize = require('../../database')
 
 const File = sequelize.define('File', {
     id: {
@@ -13,7 +13,7 @@ const File = sequelize.define('File', {
         unique: true,
     },
     size: {
-        type: DataTypes.STRING,
+        type: DataTypes.BIGINT,
         allowNull: false,
     },
     mimeType: {

@@ -1,37 +1,23 @@
-const {PutObjectCommand, DeleteObjectCommand} = require("@aws-sdk/client-s3");
-const s3 = require('../s3-config')
 const path = require('path')
-const fileModel = require("../models/file-model");
-const storageService = require("../services/storage-service")
-const fileRepository = require("../repositories/file-repository")
+const fileModel = require('../models/file-model')
+const storageService = require('../services/storage-service')
+const fileRepository = require('../repositories/file-repository')
 const ApiError = require('../exceptions/api-error')
 
 class FileService {
     async upload(file) {
-        const storageFileName = await this.uploadToStorage(file)
+        const storageFileName = await storageService.uploadToStorage(file)
         await this.saveToDb(file, storageFileName)
     }
 
-    async uploadToStorage(file) {
-        const key = Date.now() + file.originalname
-        const uploadParams = {
-            Bucket: 'jwt-test',
-            Key: key,
-            Body: file.buffer,
-            ContentType: file.mimetype,
-            ACL: 'public-read'
-        }
-
-        const command = new PutObjectCommand(uploadParams)
-
-        await s3.send(command)
-        return key
-    }
-
     async saveToDb(file, storageFileName) {
-        const linkToStorage = this.getLinkToStorageByFileName(storageFileName)
-        const { size, mimetype } = file
-        const fileExtName = path.extname(storageFileName)
+        const {
+            linkToStorage,
+            size,
+            mimetype,
+            fileExtName,
+        } = this.getDataFromFile(file, storageFileName)
+
         await fileModel.create({
             linkToStorage,
             size,
@@ -89,7 +75,47 @@ class FileService {
         if (!file) {
             throw ApiError.BadRequest('Файла с таким id не существует')
         }
-        return await storageService.getFileFromStorage(file.name)
+        const fileFromStorage = await storageService.getFileFromStorage(file.name)
+        return {
+            fileStream: fileFromStorage.Body,
+            name: file.name
+        }
+    }
+
+    async update(file, id) {
+        const fileFromDb = await fileRepository.findById(id, ['id', 'name'])
+        const {
+            linkToStorage,
+            size,
+            mimetype,
+            fileExtName,
+            buffer,
+        } = this.getDataFromFile(file, fileFromDb.name)
+        await storageService.updateFileToStorage(buffer, fileFromDb.name, mimetype)
+        await fileRepository.updateById(
+            {
+                size,
+                mimeType: mimetype,
+                linkToStorage,
+                extName: fileExtName
+            },
+            id
+        )
+    }
+
+    getDataFromFile(file, storageFileName) {
+        const linkToStorage = this.getLinkToStorageByFileName(storageFileName)
+        const { size, mimetype, originalname, buffer } = file
+        const fileExtName = path.extname(originalname)
+
+        return {
+            linkToStorage,
+            size,
+            mimetype,
+            fileExtName,
+            originalname,
+            buffer
+        }
     }
 }
 

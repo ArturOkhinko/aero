@@ -1,8 +1,9 @@
 const userRepository = require('../repositories/user-repository')
 const UserDto = require('../dto/user-dto')
-const tokenService = require('../services/token-service')
+const tokenService = require('./token-service')
 const bcrypt = require('bcrypt')
 const ApiError = require('../exceptions/api-error')
+const tokenRepository = require('../repositories/token-repository')
 
 class AuthService {
     async signup(userContact, password, deviceId) {
@@ -33,6 +34,20 @@ class AuthService {
         return await this.generateUserSession(user, deviceId)
     }
 
+    async refresh(refreshToken, deviceId) {
+        if (!refreshToken || !deviceId) {
+            throw ApiError.UnauthorizedError()
+        }
+        const userData = tokenService.validateRefreshToken(refreshToken)
+        const tokenFromDataBase = tokenRepository.findTokenByRefreshToken(refreshToken)
+        if (!userData || !tokenFromDataBase) {
+            throw ApiError.UnauthorizedError()
+        }
+
+        const user = await userRepository.findUserById(userData.id)
+        return await this.generateUserSession(user, deviceId)
+    }
+
     async logout(refreshToken) {
         return await tokenService.deleteToken(refreshToken)
     }
@@ -46,6 +61,11 @@ class AuthService {
             ...tokens,
             user: userDto,
         }
+    }
+
+    async info(refreshToken) {
+        const token = await tokenRepository.findTokenByRefreshToken(refreshToken)
+        return token.userId
     }
 }
 

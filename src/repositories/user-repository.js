@@ -1,4 +1,4 @@
-const UserModel = require("../models/user-model");
+const UserModel = require('../models/user-model')
 
 class UserRepository {
     async findUserByContact(userContact) {
@@ -6,7 +6,14 @@ class UserRepository {
             where: {
                 userContact,
             },
-            rejectOnEmpty: undefined,
+        })
+    }
+
+    async findUserById(id) {
+        return await UserModel.findOne({
+            where: {
+                id,
+            },
         })
     }
 

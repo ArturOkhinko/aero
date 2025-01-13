@@ -4,6 +4,7 @@ function router(app) {
     app.use('/signin', require('./signin'))
     app.use('/logout', require('./logout'))
     app.use('/file', require('./file'))
+    app.use('/info', require('./info'))
 }
 
 module.exports = router

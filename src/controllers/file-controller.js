@@ -1,5 +1,5 @@
-const ApiError = require("../exceptions/api-error");
-const fileService = require("../services/file-service")
+const ApiError = require('../exceptions/api-error')
+const fileService = require('../services/file-service')
 
 class FileController {
     async upload(req, res, next) {
@@ -54,8 +54,26 @@ class FileController {
     async download(req, res, next) {
         try {
             const id = Number(req.params.id)
-            const fileStream = await fileService.download(id)
-            res.download('/Users/arturohinko/WebstormProjects/untitled8/jwt-test/server/controllers/F2F5DC7D-FF18-4D42-A297-0F44A685DED5 2.JPG')
+            const fileData = await fileService.download(id)
+            res.setHeader('Content-Type', fileData.fileStream.headers['content-type']);
+            res.setHeader('Content-Disposition', `attachment; filename="${fileData.name}"`); // Укажите имя файла
+
+            fileData.fileStream.pipe(res);
+        }
+        catch(e) {
+            next(e)
+        }
+    }
+
+    async update(req, res, next) {
+        try {
+            const file = req.file
+            const id = Number(req.params.id)
+            if (!file) {
+                return next(ApiError.BadRequest('Отсутствует файл'))
+            }
+            await fileService.update(file, id)
+            res.sendStatus(200)
         }
         catch(e) {
             next(e)

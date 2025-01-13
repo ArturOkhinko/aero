@@ -17,6 +17,17 @@ class FileRepository {
             }
         })
     }
+
+    async updateById(update, id) {
+        fileModel.update(
+            update,
+            {
+                where: {
+                    id
+                }
+            }
+        )
+    }
 }
 
 module.exports = new FileRepository()

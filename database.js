@@ -1,16 +1,16 @@
-const { Sequelize } = require('sequelize');
+const { Sequelize } = require('sequelize')
 
 const sequelize = new Sequelize({
-    username: 'a0838485_a0838485',
-    database: 'a0838485_a0838485',
-    password: 'an94hrjb49ufc4hfcdj',
-    host: '141.8.192.193',
+    username: process.env.DB_USER_NAME,
+    database: process.env.DB_NAME,
+    password: process.env.DB_PASSWORD,
+    host: process.env.DB_HOST,
     dialect: 'mysql',
     port: 3306,
 });
 
 sequelize.authenticate()
     .then(() => console.log('Connection to MySQL has been established successfully.'))
-    .catch((err) => console.error('Unable to connect to the database:', err));
+    .catch((err) => console.error('Unable to connect to the database:', err))
 
-module.exports = sequelize;
+module.exports = sequelize
